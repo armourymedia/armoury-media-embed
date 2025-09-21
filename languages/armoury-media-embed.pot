@@ -1,0 +1,18 @@
+# Copyright (C) 2025 Armoury Media
+# This file is distributed under the same license as the Armoury Media Embed package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Armoury Media Embed 1.0.0\n"
+"Report-Msgid-Bugs-To: https://www.armourymedia.com/\n"
+"POT-Creation-Date: 2025-09-21 19:01+0900\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../armoury-media-embed.php:105
+msgid "Play video"
+msgstr ""
+
+#: ../armoury-media-embed.php:106
+msgid "Video player"
+msgstr ""
