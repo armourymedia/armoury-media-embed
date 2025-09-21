@@ -19,19 +19,60 @@
         const selectors = buildSelectors();
         if (!selectors) return;
 
-        document.querySelectorAll(selectors).forEach(setupVideoLink);
+        processVideoLinks(selectors);
 
         // Watch for dynamically added content.
         if (window.MutationObserver) {
             const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (mutation.addedNodes.length) {
-                        document.querySelectorAll(selectors).forEach(setupVideoLink);
-                    }
-                });
+                const hasNewNodes = mutations.some(m => m.addedNodes.length > 0);
+                if (hasNewNodes) {
+                    processVideoLinks(selectors);
+                }
             });
-            observer.observe(document.body, { childList: true, subtree: true });
+            observer.observe(document.body, { 
+                childList: true, 
+                subtree: true 
+            });
         }
+    }
+
+    /**
+     * Process all video links on the page.
+     */
+    function processVideoLinks(selectors) {
+        document.querySelectorAll(selectors).forEach(link => {
+            if (isValidVideoLink(link)) {
+                setupVideoLink(link);
+            }
+        });
+    }
+
+    /**
+     * Validate video link for security.
+     */
+    function isValidVideoLink(link) {
+        if (!link.href || processed.has(link)) return false;
+        
+        try {
+            const url = new URL(link.href);
+            
+            // Find matching provider
+            for (const provider of Object.values(config.providers)) {
+                if (!provider.allowed_hosts) continue;
+                
+                // Check if hostname is in allowed list
+                const isAllowed = provider.allowed_hosts.some(host => 
+                    url.hostname === host || url.hostname.endsWith('.' + host)
+                );
+                
+                if (isAllowed) return true;
+            }
+        } catch (e) {
+            // Invalid URL
+            return false;
+        }
+        
+        return false;
     }
 
     /**
@@ -54,74 +95,108 @@
      */
     function setupVideoLink(link) {
         const img = link.querySelector('img');
-        // Skip if already processed or no image inside.
-        if (processed.has(link) || !img) return;
+        if (!img) return;
+        
         processed.add(link);
 
-        // Add class and play button.
+        // Add class and create play button.
         link.classList.add('ame-video-link');
         const playButton = document.createElement('div');
         playButton.className = 'ame-play-button';
         link.appendChild(playButton);
 
-        // Create a more descriptive ARIA label.
-        const i18n = config.i18n || { playVideo: 'Play video' };
-        let ariaLabel = i18n.playVideo;
+        // Setup accessibility.
+        const i18n = config.i18n || {};
+        let ariaLabel = i18n.playVideo || 'Play video';
         if (img.alt) {
             ariaLabel += `: ${img.alt}`;
         }
-        link.setAttribute('aria-label', ariaLabel);
         
+        link.setAttribute('aria-label', ariaLabel);
         link.setAttribute('role', 'button');
         link.setAttribute('tabindex', '0');
 
-        // Handle click.
-        link.addEventListener('click', function(e) {
+        // Event handlers.
+        link.addEventListener('click', handleVideoClick);
+        link.addEventListener('keydown', handleVideoKeydown);
+    }
+
+    /**
+     * Handle video link click.
+     */
+    function handleVideoClick(e) {
+        e.preventDefault();
+        embedVideo(this);
+    }
+
+    /**
+     * Handle keyboard interaction.
+     */
+    function handleVideoKeydown(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             embedVideo(this);
-        });
-
-        // Handle keyboard.
-        link.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                embedVideo(this);
-            }
-        });
+        }
     }
 
     /**
      * Embed video in place of link.
      */
     function embedVideo(link) {
-        const embedUrl = getEmbedUrl(link.href);
-        if (!embedUrl) return;
+        try {
+            const embedUrl = getEmbedUrl(link.href);
+            if (!embedUrl) {
+                console.warn('AME: Could not generate embed URL for', link.href);
+                return;
+            }
 
-        // Create wrapper and add loading state.
-        const wrapper = document.createElement('div');
-        wrapper.className = 'ame-video-wrapper ame-loading';
+            // Create wrapper with loading state.
+            const wrapper = document.createElement('div');
+            wrapper.className = 'ame-video-wrapper ame-loading';
 
-        // Create and add loader spinner.
-        const loader = document.createElement('div');
-        loader.className = 'ame-loader';
-        wrapper.appendChild(loader);
+            // Create loader.
+            const loader = document.createElement('div');
+            loader.className = 'ame-loader';
+            loader.setAttribute('aria-label', 'Loading video');
+            wrapper.appendChild(loader);
 
-        // Create iframe.
-        const iframe = document.createElement('iframe');
-        iframe.src = embedUrl;
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-        iframe.allowFullscreen = true;
-        iframe.title = config.i18n?.videoPlayer || 'Video player';
+            // Create iframe.
+            const iframe = document.createElement('iframe');
+            iframe.src = embedUrl;
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen';
+            iframe.allowFullscreen = true;
+            iframe.title = config.i18n?.videoPlayer || 'Video player';
+            
+            // Set sandbox for additional security (allows required features).
+            iframe.sandbox = 'allow-scripts allow-same-origin allow-presentation allow-popups';
 
-        // When iframe is loaded, remove the loader and show the video.
-        iframe.onload = () => {
-            wrapper.classList.remove('ame-loading');
-            loader.remove();
-        };
+            // Handle iframe load success.
+            iframe.onload = () => {
+                wrapper.classList.remove('ame-loading');
+                loader.remove();
+                
+                // Announce to screen readers.
+                announceToScreenReader(config.i18n?.videoPlayer || 'Video player loaded');
+            };
 
-        // Add iframe to wrapper and replace the original link in the DOM.
-        wrapper.appendChild(iframe);
-        link.parentNode.replaceChild(wrapper, link);
+            // Handle iframe load error.
+            iframe.onerror = () => {
+                wrapper.classList.remove('ame-loading');
+                wrapper.classList.add('ame-error');
+                loader.textContent = config.i18n?.loadError || 'Video could not be loaded';
+                loader.setAttribute('role', 'alert');
+            };
+
+            // Add iframe and replace link.
+            wrapper.appendChild(iframe);
+            link.parentNode.replaceChild(wrapper, link);
+            
+            // Focus management for accessibility.
+            iframe.focus();
+            
+        } catch (error) {
+            console.error('AME: Error embedding video', error);
+        }
     }
 
     /**
@@ -130,57 +205,104 @@
     function getEmbedUrl(url) {
         if (!config.providers) return null;
 
-        for (const provider of Object.values(config.providers)) {
-            const patterns = provider.pattern.split('|');
-            for (const pattern of patterns) {
-                if (url.includes(pattern)) {
-                    // Handle special transformations.
-                    if (provider.embed === 'youtube') {
-                        return transformYouTubeUrl(url);
-                    }
-                    if (provider.embed === 'vimeo') {
-                        return transformVimeoUrl(url);
-                    }
-                    // Simple replacement.
-                    if (Array.isArray(provider.embed)) {
-                        return url.replace(provider.embed[0], provider.embed[1]);
+        try {
+            const urlObj = new URL(url);
+            
+            for (const [key, provider] of Object.entries(config.providers)) {
+                const patterns = provider.pattern.split('|');
+                
+                for (const pattern of patterns) {
+                    if (url.includes(pattern)) {
+                        // Validate against allowed hosts.
+                        if (provider.allowed_hosts) {
+                            const isAllowed = provider.allowed_hosts.some(host => 
+                                urlObj.hostname === host || urlObj.hostname.endsWith('.' + host)
+                            );
+                            if (!isAllowed) continue;
+                        }
+                        
+                        // Handle special transformations.
+                        if (provider.embed === 'youtube') {
+                            return transformYouTubeUrl(url, urlObj);
+                        }
+                        if (provider.embed === 'vimeo') {
+                            return transformVimeoUrl(url, urlObj);
+                        }
+                        
+                        // Simple replacement.
+                        if (Array.isArray(provider.embed)) {
+                            return url.replace(provider.embed[0], provider.embed[1]);
+                        }
                     }
                 }
             }
+        } catch (e) {
+            console.error('AME: Invalid URL', e);
         }
+        
         return null;
     }
 
     /**
-     * Transform YouTube URL.
+     * Transform YouTube URL with privacy mode by default.
      */
-    function transformYouTubeUrl(url) {
+    function transformYouTubeUrl(url, urlObj) {
         let videoId = null;
 
         // Handle youtube.com/watch?v=ID
-        const watchMatch = url.match(/[?&]v=([^&]+)/);
+        const watchMatch = urlObj.searchParams.get('v');
         if (watchMatch) {
-            videoId = watchMatch[1];
+            videoId = watchMatch;
+        } else {
+            // Handle youtu.be/ID
+            const shortMatch = url.match(/youtu\.be\/([^?]+)/);
+            if (shortMatch) {
+                videoId = shortMatch[1];
+            }
         }
 
-        // Handle youtu.be/ID
-        const shortMatch = url.match(/youtu\.be\/([^?]+)/);
-        if (shortMatch) {
-            videoId = shortMatch[1];
-        }
+        if (!videoId) return null;
 
-        return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0` : null;
+        // Use privacy-enhanced mode by default (can be disabled via filter).
+        const domain = config.privacy_mode !== false ? 'youtube-nocookie.com' : 'youtube.com';
+        return `https://www.${domain}/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
     }
 
     /**
-     * Transform Vimeo URL.
+     * Transform Vimeo URL with privacy by default.
      */
-    function transformVimeoUrl(url) {
+    function transformVimeoUrl(url, urlObj) {
         const match = url.match(/vimeo\.com\/(\d+)/);
-        return match ? `https://player.vimeo.com/video/${match[1]}?autoplay=1` : null;
+        if (!match) return null;
+        
+        const videoId = match[1];
+        let embedUrl = `https://player.vimeo.com/video/${encodeURIComponent(videoId)}?autoplay=1`;
+        
+        // Add do-not-track by default (can be disabled via filter).
+        if (config.privacy_mode !== false) {
+            embedUrl += '&dnt=1';
+        }
+        
+        return embedUrl;
     }
 
-    // Initialize.
+    /**
+     * Announce message to screen readers.
+     */
+    function announceToScreenReader(message) {
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.className = 'screen-reader-text';
+        announcement.style.position = 'absolute';
+        announcement.style.left = '-9999px';
+        announcement.textContent = message;
+        
+        document.body.appendChild(announcement);
+        setTimeout(() => announcement.remove(), 1000);
+    }
+
+    // Initialize based on DOM state.
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
