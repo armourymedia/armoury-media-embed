@@ -3,19 +3,26 @@
  *
  * @package ArmouryMediaEmbed
  * @since 1.0.0
+ * @version 1.0.0
  */
 
 /* Video Link
 -------------------------------------------------------------- */
-.ame-video-link, .wp-block-image .ame-video-link {
+.ame-video-link, 
+.wp-block-image .ame-video-link {
     position: relative;
     display: block;
     cursor: pointer;
 }
 
-.ame-video-link:focus {
+/* Modern focus styling */
+.ame-video-link:focus-visible {
     outline: 3px solid #0073aa;
     outline-offset: 2px;
+}
+
+.ame-video-link:focus:not(:focus-visible) {
+    outline: none;
 }
 
 /* Hover Overlay
@@ -34,7 +41,7 @@
 }
 
 .ame-video-link:hover::before,
-.ame-video-link:focus::before {
+.ame-video-link:focus-visible::before {
     background: rgba(0, 0, 0, 0.2);
 }
 
@@ -68,7 +75,7 @@
 }
 
 .ame-video-link:hover .ame-play-button,
-.ame-video-link:focus .ame-play-button {
+.ame-video-link:focus-visible .ame-play-button {
     transform: translate(-50%, -50%) scale(1.1);
     background: rgba(0, 0, 0, 0.85);
 }
@@ -124,6 +131,26 @@
     opacity: 0;
 }
 
+/* Error State
+-------------------------------------------------------------- */
+.ame-video-wrapper.ame-error .ame-loader {
+    animation: none;
+    border: 2px solid #dc3545;
+    border-top-color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+    width: auto;
+    height: auto;
+    padding: 12px 20px;
+    border-radius: 4px;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* Loading Animation
+-------------------------------------------------------------- */
 @keyframes ame-spin {
     to {
         transform: translate(-50%, -50%) rotate(360deg);
@@ -145,6 +172,12 @@
     .ame-loader {
         width: 40px;
         height: 40px;
+        border-width: 3px;
+    }
+    
+    .ame-video-wrapper.ame-error .ame-loader {
+        font-size: 13px;
+        padding: 10px 16px;
     }
 }
 
@@ -153,8 +186,26 @@
 @media (prefers-reduced-motion: reduce) {
     .ame-video-link::before,
     .ame-play-button,
+    .ame-video-wrapper iframe,
     .ame-loader {
         transition: none;
+    }
+    
+    .ame-loader {
         animation: none;
+        border-color: #fff;
+    }
+}
+
+/* High Contrast Mode Support
+-------------------------------------------------------------- */
+@media (prefers-contrast: high) {
+    .ame-play-button {
+        background: #000;
+        border: 2px solid #fff;
+    }
+    
+    .ame-video-link:focus-visible {
+        outline-width: 4px;
     }
 }
