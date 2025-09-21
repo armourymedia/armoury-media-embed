@@ -48,7 +48,6 @@ add_filter('ame_providers', function($providers) {
     // Add a custom provider
     $providers['custom'] = [
         'pattern' => 'example.com/video',
-        'domain'  => 'example.com',
         'embed'   => ['video/', 'embed/']
     ];
     return $providers;
