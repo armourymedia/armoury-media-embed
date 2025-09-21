@@ -1,0 +1,160 @@
+/**
+ * Armoury Media Embed
+ *
+ * @package ArmouryMediaEmbed
+ * @since 1.0.0
+ */
+
+/* Video Link
+-------------------------------------------------------------- */
+.ame-video-link, .wp-block-image .ame-video-link {
+    position: relative;
+    display: block;
+    cursor: pointer;
+}
+
+.ame-video-link:focus {
+    outline: 3px solid #0073aa;
+    outline-offset: 2px;
+}
+
+/* Hover Overlay
+-------------------------------------------------------------- */
+.ame-video-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0);
+    transition: background-color 0.3s ease;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.ame-video-link:hover::before,
+.ame-video-link:focus::before {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Play Button
+-------------------------------------------------------------- */
+.ame-play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 72px;
+    height: 72px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.ame-play-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 54%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 14px 0 14px 24px;
+    border-color: transparent transparent transparent #fff;
+}
+
+.ame-video-link:hover .ame-play-button,
+.ame-video-link:focus .ame-play-button {
+    transform: translate(-50%, -50%) scale(1.1);
+    background: rgba(0, 0, 0, 0.85);
+}
+
+/* Video Wrapper
+-------------------------------------------------------------- */
+.ame-video-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    line-height: 0;
+}
+
+/* Fallback for browsers without aspect-ratio support */
+@supports not (aspect-ratio: 16/9) {
+    .ame-video-wrapper {
+        padding-top: 56.25%;
+    }
+    
+    .ame-video-wrapper iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+}
+
+.ame-video-wrapper iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* Loader Spinner
+-------------------------------------------------------------- */
+.ame-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 1;
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: ame-spin 1s linear infinite;
+}
+
+.ame-video-wrapper.ame-loading iframe {
+    opacity: 0;
+}
+
+@keyframes ame-spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/* Mobile Adjustments
+-------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .ame-play-button {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .ame-play-button::after {
+        border-width: 12px 0 12px 20px;
+    }
+
+    .ame-loader {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* Reduced Motion
+-------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    .ame-video-link::before,
+    .ame-play-button,
+    .ame-loader {
+        transition: none;
+        animation: none;
+    }
+}
