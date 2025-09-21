@@ -1,38 +1,37 @@
 # Armoury Media Embed
 
-A minimal WordPress plugin that transforms images into click-to-play video embeds. Just link any image to a video URL and the plugin handles the rest. No settings, no configuration—it just works.
+A minimal WordPress plugin that transforms images into click-to-play video embeds. Just link any image to a video play URL and the plugin handles the rest. No settings or configuration required.
 
 ## Features
 
 - **Zero Configuration**: Works immediately upon activation
-- **Performance First**: Videos load only when clicked
+- **Performance First**: Videos load when image is clicked
 - **Smart Loading**: Assets only load on pages with video links
-- **Minimal Footprint**: Under 10KB total
-- **Fully Accessible**: Keyboard navigation and screen reader support
-- **Responsive**: Works on all devices
+- **Accessible**: Keyboard navigation and screen reader support
+- **Responsive**: Works on all devices and orientations
 
 ## Supported Platforms
 
-- **YouTube** (youtube.com, youtu.be)
-- **Vimeo** (vimeo.com)
 - **Bunny Stream** (iframe.mediadelivery.net)
 - **Cloudflare Stream** (cloudflarestream.com)
+- **YouTube** (youtube.com, youtu.be)
+- **Vimeo** (vimeo.com)
 
 ## Installation
 
 1. Upload to `/wp-content/plugins/armoury-media-embed/`
 2. Activate through the WordPress admin panel.
-3. That's it (no configuration needed).
+3. That's it (no configuration necessary).
 
 ## Usage
 
 1. Add an image to any post or page.
 2. Link the image to a supported video URL.
-3. Publish your post.
+3. Publish your post, page, or CPT.
 
-The plugin automatically detects the video link and adds a play button overlay. Clicking the image replaces it with the embedded video and begins playback.
+The plugin automatically detects the video link and adds a play button overlay. Clicking the image replaces it with the embedded video and begins video playback.
 
-## Example URLs
+## Example video play URLs
 
 - **YouTube**: `https://www.youtube.com/watch?v=VIDEO_ID` or `https://youtu.be/VIDEO_ID`
 - **Vimeo**: `https://vimeo.com/VIDEO_ID`
@@ -41,7 +40,7 @@ The plugin automatically detects the video link and adds a play button overlay. 
 
 ## Developer Customization
 
-While the plugin requires no configuration, developers can customize behavior using filters:
+While the plugin requires no configuration, you can use the following filter to add your own video hosting provider:
 
 ```php
 // Customize provider configuration
