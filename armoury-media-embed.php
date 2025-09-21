@@ -31,38 +31,36 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return void
  */
 add_action( 'wp_enqueue_scripts', function() {
-	// Only proceed if we are on a single post, page, or custom post type.
-	if ( ! is_singular() ) {
+	// Only proceed on singular pages with a valid post object.
+	if ( ! is_singular() || ! $post = get_post() ) {
 		return;
 	}
 
-	$post = get_post();
-	// Post object should exist on singular pages, but check just in case.
-	if ( ! $post ) {
-		return;
-	}
-
-	// Define providers and allow them to be filtered.
+	// Define providers with security constraints and allow filtering.
 	$providers = apply_filters( 'ame_providers', array(
 		'bunny' => array(
 			'pattern' => 'iframe.mediadelivery.net/play',
 			'embed'   => array( '/play/', '/embed/' ),
+			'allowed_hosts' => array( 'iframe.mediadelivery.net' ),
 		),
 		'cloudflare' => array(
 			'pattern' => 'cloudflarestream.com',
 			'embed'   => array( '/watch', '/iframe?autoplay=true' ),
+			'allowed_hosts' => array( 'cloudflarestream.com', 'customer.cloudflarestream.com' ),
 		),
 		'youtube' => array(
 			'pattern' => 'youtube.com/watch|youtu.be/',
 			'embed'   => 'youtube',
+			'allowed_hosts' => array( 'youtube.com', 'www.youtube.com', 'youtu.be', 'm.youtube.com' ),
 		),
 		'vimeo' => array(
 			'pattern' => 'vimeo.com',
 			'embed'   => 'vimeo',
+			'allowed_hosts' => array( 'vimeo.com', 'player.vimeo.com' ),
 		),
 	) );
 
-	// Build a list of patterns to search for in the content.
+	// Build patterns to search for in content.
 	$patterns = array();
 	foreach ( $providers as $provider ) {
 		$patterns = array_merge( $patterns, explode( '|', $provider['pattern'] ) );
@@ -77,17 +75,21 @@ add_action( 'wp_enqueue_scripts', function() {
 		}
 	}
 
-	// If no video link is found in the content, do not load assets.
+	// Bail if no video links found.
 	if ( ! $content_has_video_link ) {
 		return;
 	}
+
+	// Get plugin version for cache busting.
+	$plugin_data = get_file_data( __FILE__, array( 'Version' => 'Version' ) );
+	$version = $plugin_data['Version'] ?? '1.0.0';
 
 	// Enqueue styles.
 	wp_enqueue_style(
 		'armoury-media-embed',
 		plugin_dir_url( __FILE__ ) . 'assets/css/am-embed.css',
 		array(),
-		'1.0.0'
+		$version
 	);
 
 	// Enqueue script.
@@ -95,20 +97,35 @@ add_action( 'wp_enqueue_scripts', function() {
 		'armoury-media-embed',
 		plugin_dir_url( __FILE__ ) . 'assets/js/am-embed.js',
 		array(),
-		'1.0.0',
+		$version,
 		true
 	);
 
-	// Pass provider config and translatable strings to JavaScript.
-	wp_localize_script(
+	// Prepare configuration for JavaScript.
+	$config = array(
+		'providers'     => $providers,
+		'privacy_mode'  => apply_filters( 'ame_privacy_mode', true ),
+		'i18n'          => array(
+			'playVideo'    => esc_attr__( 'Play video', 'armoury-media-embed' ),
+			'videoPlayer'  => esc_attr__( 'Video player', 'armoury-media-embed' ),
+			'loadError'    => esc_attr__( 'Video could not be loaded', 'armoury-media-embed' ),
+		),
+	);
+
+	// Pass configuration to JavaScript.
+	wp_localize_script( 'armoury-media-embed', 'ameConfig', $config );
+} );
+
+/**
+ * Load plugin text domain for translations.
+ *
+ * @since 1.0.0
+ * @return void
+ */
+add_action( 'init', function() {
+	load_plugin_textdomain(
 		'armoury-media-embed',
-		'ameConfig',
-		array(
-			'providers' => $providers,
-			'i18n'      => array(
-				'playVideo'  => esc_attr__( 'Play video', 'armoury-media-embed' ),
-				'videoPlayer' => esc_attr__( 'Video player', 'armoury-media-embed' ),
-			),
-		)
+		false,
+		dirname( plugin_basename( __FILE__ ) ) . '/languages'
 	);
 } );
