@@ -168,7 +168,7 @@
             iframe.title = config.i18n?.videoPlayer || 'Video player';
             
             // Set sandbox for additional security (allows required features).
-            iframe.sandbox = 'allow-scripts allow-same-origin allow-presentation allow-popups allow-forms allow-popups-to-escape-sandbox';
+            iframe.sandbox = 'allow-scripts allow-same-origin allow-presentation allow-popups';
 
             // Handle iframe load success.
             iframe.onload = () => {
