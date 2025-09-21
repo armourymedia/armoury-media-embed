@@ -9,7 +9,7 @@ A minimal WordPress plugin that transforms images into click-to-play video embed
 - **Performance First**: Videos load only when clicked, preserving page speed
 - **Smart Loading**: Assets load only on pages with video links
 - **Fully Accessible**: Keyboard navigation, screen reader support, focus management
-- **Secure**: URL validation and sandboxed iframes
+- **Secure**: URL validation and sandboxed iframes with restricted permissions
 - **Responsive**: Works on all devices and orientations
 
 ## Supported Platforms
@@ -33,12 +33,14 @@ A minimal WordPress plugin that transforms images into click-to-play video embed
 
 The plugin automatically detects the video link and adds a play button overlay. Clicking the image replaces it with the embedded video and begins playback.
 
+**Note**: Only images linked to recognized video platforms will be transformed. Other linked images remain unchanged.
+
 ## Example Video URLs
 
 - **YouTube**: `https://www.youtube.com/watch?v=VIDEO_ID` or `https://youtu.be/VIDEO_ID`
 - **Vimeo**: `https://vimeo.com/VIDEO_ID`
 - **Bunny Stream**: `https://iframe.mediadelivery.net/play/12345/video-id`
-- **Cloudflare Stream**: `https://customer.cloudflarestream.com/video-id/watch`
+- **Cloudflare Stream**: `https://customer-xxxxx.cloudflarestream.com/video-id/watch`
 
 ## Privacy Mode
 
@@ -47,26 +49,69 @@ Privacy-enhanced embeds are **enabled by default** for GDPR compliance and user 
 - YouTube uses no-cookie domain (youtube-nocookie.com)
 - Vimeo includes do-not-track parameter
 - Reduced tracking across all providers
+- Restrictive iframe sandboxing blocks forms and unnecessary features
 
-To disable privacy mode if needed:
+### Disable Privacy Mode
+
+If you need to disable privacy mode (not recommended):
 
 ```php
 // In your theme's functions.php or a custom plugin
 add_filter('ame_privacy_mode', '__return_false');
 ```
 
+### Enable Privacy Mode (if previously disabled)
+
+```php
+// Explicitly enable privacy mode
+add_filter('ame_privacy_mode', '__return_true');
+```
+
 ## Developer Customization
 
 ### Add Custom Providers
 
+Register additional video providers using the `ame_providers` filter:
+
 ```php
 add_filter('ame_providers', function($providers) {
-    $providers['custom'] = [
-        'pattern' => 'example.com/video',
-        'embed'   => ['/video/', '/embed/'],
-        'allowed_hosts' => ['example.com', 'cdn.example.com']
+    // Add support for Wistia videos
+    $providers['wistia'] = [
+        'pattern' => 'wistia.com/medias|wistia.net',
+        'embed'   => 'wistia',  // Use special handler
+        'allowed_hosts' => ['fast.wistia.com', 'fast.wistia.net']
     ];
+    
+    // Add support for self-hosted videos with simple URL replacement
+    $providers['selfhosted'] = [
+        'pattern' => 'videos.example.com/watch',
+        'embed'   => ['/watch/', '/embed/'],  // Replace /watch/ with /embed/
+        'allowed_hosts' => ['videos.example.com']
+    ];
+    
     return $providers;
+});
+```
+
+**Provider configuration keys**:
+- `pattern`: String to detect in content (pipe-separated for multiple patterns)
+- `embed`: Either an array for simple replacement `[search, replace]` or a string identifier for special handlers
+- `allowed_hosts`: Array of allowed domains for security validation
+
+**Note**: For providers requiring complex URL transformations, you'll need to add a corresponding JavaScript handler.
+
+### Modify Privacy Settings per Provider
+
+Control privacy settings for specific providers:
+
+```php
+// Example: Disable privacy mode only for Vimeo
+add_filter('ame_privacy_mode', function($privacy_mode) {
+    // Check if we're processing a Vimeo URL (custom logic needed)
+    if (isset($_GET['provider']) && $_GET['provider'] === 'vimeo') {
+        return false;
+    }
+    return $privacy_mode;
 });
 ```
 
@@ -94,11 +139,13 @@ The translatable strings include:
 
 ## Security Features
 
-- URL validation against allowed hosts
-- Sandboxed iframes with minimal permissions
-- No direct database queries
-- Escaped and sanitized output
-- No user input processing
+- **URL Validation**: Only transforms links to approved video hosts
+- **Sandboxed iframes**: Restrictive permissions prevent invasive features
+  - Blocks forms, pop-ups, and tracking features
+  - Allows only essential playback functionality
+- **No Database Queries**: Zero attack surface for SQL injection
+- **Escaped Output**: All dynamic content is properly sanitized
+- **No User Input Processing**: Plugin only reads existing content
 
 ## Performance Optimization
 
@@ -107,6 +154,22 @@ The translatable strings include:
 - Zero database queries
 - Compatible with all caching plugins
 - No render-blocking resources
+- Videos load only on demand (click-to-play)
+
+## Troubleshooting
+
+### Video not transforming into embed
+
+1. Verify the image is linked to a supported video platform
+2. Check that the video URL is publicly accessible
+3. Ensure JavaScript is enabled in the browser
+4. Check browser console for any error messages
+
+### Video won't play after clicking
+
+- Some browsers block autoplay - users may need to click play again
+- Verify the video hasn't been removed or made private
+- Check if the video platform is experiencing issues
 
 ## Requirements
 
@@ -138,5 +201,5 @@ Created by [Armoury Media](https://www.armourymedia.com/) - Secure websites for 
 - Privacy-by-default with YouTube no-cookie and Vimeo do-not-track
 - Conditional asset loading for optimal performance
 - Full accessibility support with keyboard navigation
-- Security features including URL validation
+- Security features including URL validation and restrictive sandboxing
 - Responsive design with mobile optimization
