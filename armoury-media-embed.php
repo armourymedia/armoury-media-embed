@@ -3,7 +3,7 @@
  * Plugin Name:       Armoury Media Embed
  * Plugin URI:        https://www.armourymedia.com/
  * Description:       Click-to-play video embeds for images linked to streaming videos. Improves page load performance.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Armoury Media
@@ -48,16 +48,6 @@ add_action( 'wp_enqueue_scripts', function() {
 			'embed'   => array( '/watch', '/iframe?autoplay=true' ),
 			'allowed_hosts' => array( 'cloudflarestream.com', 'customer.cloudflarestream.com' ),
 		),
-		'youtube' => array(
-			'pattern' => 'youtube.com/watch|youtu.be/',
-			'embed'   => 'youtube',
-			'allowed_hosts' => array( 'youtube.com', 'www.youtube.com', 'youtu.be', 'm.youtube.com' ),
-		),
-		'vimeo' => array(
-			'pattern' => 'vimeo.com',
-			'embed'   => 'vimeo',
-			'allowed_hosts' => array( 'vimeo.com', 'player.vimeo.com' ),
-		),
 	) );
 
 	// Build patterns to search for in content.
@@ -82,7 +72,7 @@ add_action( 'wp_enqueue_scripts', function() {
 
 	// Get plugin version for cache busting.
 	$plugin_data = get_file_data( __FILE__, array( 'Version' => 'Version' ) );
-	$version = $plugin_data['Version'] ?? '1.0.0';
+	$version = $plugin_data['Version'] ?? '1.0.1';
 
 	// Enqueue styles.
 	wp_enqueue_style(
@@ -103,9 +93,8 @@ add_action( 'wp_enqueue_scripts', function() {
 
 	// Prepare configuration for JavaScript.
 	$config = array(
-		'providers'     => $providers,
-		'privacy_mode'  => apply_filters( 'ame_privacy_mode', true ),
-		'i18n'          => array(
+		'providers' => $providers,
+		'i18n'      => array(
 			'playVideo'    => esc_attr__( 'Play video', 'armoury-media-embed' ),
 			'videoPlayer'  => esc_attr__( 'Video player', 'armoury-media-embed' ),
 			'loadError'    => esc_attr__( 'Video could not be loaded', 'armoury-media-embed' ),
