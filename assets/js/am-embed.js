@@ -3,7 +3,7 @@
  *
  * @package ArmouryMediaEmbed
  * @since 1.0.0
- * @version 1.0.0
+ * @version 1.0.1
  */
 
 (function() {
@@ -56,11 +56,11 @@
         try {
             const url = new URL(link.href);
             
-            // Find matching provider
+            // Find matching provider.
             for (const provider of Object.values(config.providers)) {
                 if (!provider.allowed_hosts) continue;
                 
-                // Check if hostname is in allowed list
+                // Check if hostname is in allowed list.
                 const isAllowed = provider.allowed_hosts.some(host => 
                     url.hostname === host || url.hostname.endsWith('.' + host)
                 );
@@ -68,7 +68,7 @@
                 if (isAllowed) return true;
             }
         } catch (e) {
-            // Invalid URL
+            // Invalid URL.
             return false;
         }
         
@@ -221,15 +221,7 @@
                             if (!isAllowed) continue;
                         }
                         
-                        // Handle special transformations.
-                        if (provider.embed === 'youtube') {
-                            return transformYouTubeUrl(url, urlObj);
-                        }
-                        if (provider.embed === 'vimeo') {
-                            return transformVimeoUrl(url, urlObj);
-                        }
-                        
-                        // Simple replacement.
+                        // Simple replacement for supported providers.
                         if (Array.isArray(provider.embed)) {
                             return url.replace(provider.embed[0], provider.embed[1]);
                         }
@@ -241,49 +233,6 @@
         }
         
         return null;
-    }
-
-    /**
-     * Transform YouTube URL with privacy mode by default.
-     */
-    function transformYouTubeUrl(url, urlObj) {
-        let videoId = null;
-
-        // Handle youtube.com/watch?v=ID
-        const watchMatch = urlObj.searchParams.get('v');
-        if (watchMatch) {
-            videoId = watchMatch;
-        } else {
-            // Handle youtu.be/ID
-            const shortMatch = url.match(/youtu\.be\/([^?]+)/);
-            if (shortMatch) {
-                videoId = shortMatch[1];
-            }
-        }
-
-        if (!videoId) return null;
-
-        // Use privacy-enhanced mode by default (can be disabled via filter).
-        const domain = config.privacy_mode !== false ? 'youtube-nocookie.com' : 'youtube.com';
-        return `https://www.${domain}/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
-    }
-
-    /**
-     * Transform Vimeo URL with privacy by default.
-     */
-    function transformVimeoUrl(url, urlObj) {
-        const match = url.match(/vimeo\.com\/(\d+)/);
-        if (!match) return null;
-        
-        const videoId = match[1];
-        let embedUrl = `https://player.vimeo.com/video/${encodeURIComponent(videoId)}?autoplay=1`;
-        
-        // Add do-not-track by default (can be disabled via filter).
-        if (config.privacy_mode !== false) {
-            embedUrl += '&dnt=1';
-        }
-        
-        return embedUrl;
     }
 
     /**
