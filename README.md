@@ -5,7 +5,6 @@ A minimal WordPress plugin that transforms images into click-to-play video embed
 ## Features
 
 - **Zero Configuration**: Works immediately upon activation
-- **Privacy by Default**: Uses privacy-enhanced embeds (YouTube no-cookie, Vimeo DNT)
 - **Performance First**: Videos load only when clicked, preserving page speed
 - **Smart Loading**: Assets load only on pages with video links
 - **Fully Accessible**: Keyboard navigation, screen reader support, focus management
@@ -16,8 +15,6 @@ A minimal WordPress plugin that transforms images into click-to-play video embed
 
 - **Bunny Stream** (iframe.mediadelivery.net)
 - **Cloudflare Stream** (cloudflarestream.com)
-- **YouTube** (youtube.com, youtu.be)
-- **Vimeo** (vimeo.com)
 
 ## Installation
 
@@ -37,35 +34,8 @@ The plugin automatically detects the video link and adds a play button overlay. 
 
 ## Example Video URLs
 
-- **YouTube**: `https://www.youtube.com/watch?v=VIDEO_ID` or `https://youtu.be/VIDEO_ID`
-- **Vimeo**: `https://vimeo.com/VIDEO_ID`
 - **Bunny Stream**: `https://iframe.mediadelivery.net/play/12345/video-id`
 - **Cloudflare Stream**: `https://customer-xxxxx.cloudflarestream.com/video-id/watch`
-
-## Privacy Mode
-
-Privacy-enhanced embeds are **enabled by default** for GDPR compliance and user privacy:
-
-- YouTube uses no-cookie domain (youtube-nocookie.com)
-- Vimeo includes do-not-track parameter
-- Reduced tracking across all providers
-- Restrictive iframe sandboxing blocks forms and unnecessary features
-
-### Disable Privacy Mode
-
-If you need to disable privacy mode (not recommended):
-
-```php
-// In your theme's functions.php or a custom plugin
-add_filter('ame_privacy_mode', '__return_false');
-```
-
-### Enable Privacy Mode (if previously disabled)
-
-```php
-// Explicitly enable privacy mode
-add_filter('ame_privacy_mode', '__return_true');
-```
 
 ## Developer Customization
 
@@ -99,21 +69,6 @@ add_filter('ame_providers', function($providers) {
 - `allowed_hosts`: Array of allowed domains for security validation
 
 **Note**: For providers requiring complex URL transformations, you'll need to add a corresponding JavaScript handler.
-
-### Modify Privacy Settings per Provider
-
-Control privacy settings for specific providers:
-
-```php
-// Example: Disable privacy mode only for Vimeo
-add_filter('ame_privacy_mode', function($privacy_mode) {
-    // Check if we're processing a Vimeo URL (custom logic needed)
-    if (isset($_GET['provider']) && $_GET['provider'] === 'vimeo') {
-        return false;
-    }
-    return $privacy_mode;
-});
-```
 
 ### Modify Translations
 
@@ -193,6 +148,12 @@ GPL v3 or later - see [LICENSE](LICENSE) file for details.
 Created by [Armoury Media](https://www.armourymedia.com/) - Secure websites for solo professionals.
 
 ## Changelog
+
+### 1.0.1
+- Removed YouTube and Vimeo support
+- Simplified codebase by removing provider-specific transformations
+- Improved security and performance with streamlined provider list
+- Updated documentation to reflect supported platforms
 
 ### 1.0.0
 - Initial release
