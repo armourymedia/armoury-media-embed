@@ -163,8 +163,8 @@
             // Create iframe.
             const iframe = document.createElement('iframe');
             iframe.src = embedUrl;
+            // Include fullscreen in the allow attribute instead of using deprecated allowfullscreen.
             iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen';
-            iframe.allowFullscreen = true;
             iframe.title = config.i18n?.videoPlayer || 'Video player';
             
             // Set sandbox for additional security (allows required features).
